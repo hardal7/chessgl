@@ -1,19 +1,15 @@
 // Generates vertices for the chessboard
-void generateVertices(float vertices[512], char color) {
-  // TODO: Delete duplicate vertices 512->256
-
+void generateVertices(float vertices[256], char color) {
   float xPosition = -1.0f;
   float yPosition = 1.25f;
   unsigned int j = 0;
 
-  for (unsigned int i = 0; i < 64; i++) {
-    if (i % 8 != 0) {
+  for (unsigned int i = 0; i < 32; i++) {
+    if (i % 4 != 0) {
       xPosition += 0.5f;
     } else {
-      //TODO:
-      i % 16 != 0 ? xPosition = color == 'w' ? -0.75f : -1.0f
-                  : xPosition = color == 'w' ? -1.0f : -0.75f;
-      //i % 16 != 0 ? xPosition = -0.75f : xPosition = -1.0f;
+      i % 8 != 0 ? xPosition = color == 'w' ? -0.75f : -1.0f
+                 : xPosition = color == 'w' ? -1.0f : -0.75f;
       yPosition -= 0.25f;
     }
 
@@ -47,7 +43,7 @@ void generateIndices(unsigned int indices[384]) {
   // 012121
   // j=0, j++, j++, j--, j++, j++, j--, j--, j+=2, j-=2,j+=2,j++
 
-  for (unsigned int i = 0; i < 384; i++) {
+  for (unsigned int i = 0; i < 192; i++) {
     indices[i] = j;
     (i - 2) % 6 != 0 ? j++ : j--;
   }
