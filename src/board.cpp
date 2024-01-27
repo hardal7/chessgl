@@ -1,5 +1,5 @@
 // Generates vertices for the chessboard
-void generateVertices(float vertices[512]) {
+void generateVertices(float vertices[512], char color) {
   // TODO: Delete duplicate vertices 512->256
 
   float xPosition = -1.0f;
@@ -11,9 +11,9 @@ void generateVertices(float vertices[512]) {
       xPosition += 0.5f;
     } else {
       //TODO:
-      //i % 16 != 0 ? xPosition = color == 'w' ? -0.75f : -1.0f
-      //            : xPosition = color == 'w' ? -1.0f : -0.75f;
-      i % 16 != 0 ? xPosition = -0.75f : xPosition = -1.0f;
+      i % 16 != 0 ? xPosition = color == 'w' ? -0.75f : -1.0f
+                  : xPosition = color == 'w' ? -1.0f : -0.75f;
+      //i % 16 != 0 ? xPosition = -0.75f : xPosition = -1.0f;
       yPosition -= 0.25f;
     }
 
