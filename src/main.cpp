@@ -1,19 +1,20 @@
+#include <iostream>
+
 #include "../includes/glad/glad.h"
 #include "../includes/glfw/glfw3.h"
 #include "../includes/glm/gtc/type_ptr.hpp"
-#include "../includes/shader.h"
-#include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "../includes/stb_image.h"
+
+#include "../includes/shader.h"
 #include "board.cpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-void generateTexture(unsigned int texture, char texturePath[],
-                     bool isTransparent);
+void generatePieceTextures();
 
-const int screenWidth = 600;
-const int screenHeight = 600;
+const int screenWidth = 640;
+const int screenHeight = 640;
 
 int main() {
   glfwInit();
@@ -42,11 +43,12 @@ int main() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  Shader whiteSquareShader("assets/shaders/board.vs",
-                           "assets/shaders/whiteSquare.fs");
-  Shader blackSquareShader("assets/shaders/board.vs",
-                           "assets/shaders/blackSquare.fs");
-  Shader pieceShader("assets/shaders/piece.vs", "assets/shaders/piece.fs");
+  Shader whiteSquareShader((char *)"assets/shaders/board.vs",
+                           (char *)"assets/shaders/whiteSquare.fs");
+  Shader blackSquareShader((char *)"assets/shaders/board.vs",
+                           (char *)"assets/shaders/blackSquare.fs");
+  Shader pieceShader((char *)"assets/shaders/piece.vs",
+                     "assets/shaders/piece.fs");
 
   float whiteSquareVertices[256];
   generateVertices(whiteSquareVertices, 'w');
@@ -80,7 +82,8 @@ int main() {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
-  float pieceVertices[] = {
+  const float pieceVertices[] = {
+      // Each square is 0.25 long.
       // positions  // texture coords
       0.25f, 0.25f, 0.0f, 1.0f, 1.0f, // top right
       0.25f, -0.f,  0.0f, 1.0f, 0.0f, // bottom right
@@ -88,40 +91,37 @@ int main() {
       -0.f,  0.25f, 0.0f, 0.0f, 1.0f  // top left
   };
 
-  unsigned int pieceIndices[] = {
+  const unsigned int pieceIndices[] = {
       0, 1, 3, // first triangle
       1, 2, 3  // second triangle
   };
 
-  unsigned int pieceTexture;
+  enum Piece {
+    WhitePawn,
+    WhiteKnight,
+    WhiteBishop,
+    WhiteRook,
+    WhiteQueen,
+    WhiteKing,
+    BlackPawn,
+    BlackKnight,
+    BlackBishop,
+    BlackRook,
+    BlackQueen,
+    BlackKing
+  };
 
-  glGenTextures(1, &pieceTexture);
-  glBindTexture(GL_TEXTURE_2D, pieceTexture);
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  // load image, create texture and generate mipmaps
-  int width, height, nrChannels;
-  stbi_set_flip_vertically_on_load(
-      true); // tell stb_image.h to flip loaded texture's on the y-axis.
-  unsigned char *data = stbi_load("assets/textures/pieces/bw.png", &width,
-                                  &height, &nrChannels, 0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-               GL_UNSIGNED_BYTE, data);
+  generatePieceTextures();
+  pieceShader.use();
+  pieceShader.setInt("pieceTexture", 0);
 
   glBindVertexArray(VAO[2]);
-
   glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(pieceVertices), pieceVertices,
                GL_STATIC_DRAW);
-
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[2]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(pieceIndices), pieceIndices,
                GL_STATIC_DRAW);
-
   // position attribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
@@ -130,15 +130,11 @@ int main() {
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
-  pieceShader.use();
-  pieceShader.setInt("pieceTexture", 0);
-
   // render loop
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.40f, 0.10, 0.40f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // create transformations
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 projection = glm::mat4(1.0f);
@@ -170,7 +166,7 @@ int main() {
     glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
 
     blackSquareShader.use();
-    unsigned int blackProjectionLoc=
+    unsigned int blackProjectionLoc =
         glGetUniformLocation(blackSquareShader.ID, "projection");
     glUniformMatrix4fv(blackModelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(blackViewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -180,9 +176,8 @@ int main() {
     glBindVertexArray(VAO[1]);
     glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, pieceTexture);
     pieceShader.use();
+    glBindTexture(GL_TEXTURE_2D, WhitePawn);
     glBindVertexArray(VAO[2]);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -204,32 +199,38 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void generateTexture(unsigned int texture, char texturePath[],
-                     bool isTransparent) {
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  // set the texture wrapping parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  // set texture filtering parameters
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  // load image, create texture and generate mipmaps
+void generatePieceTextures() {
+  const std::string pieceNames[12] = {
+      "pw", "nw", "bw", "rw", "qw", "kw", //
+      "pb", "nb", "bb", "rb", "qb", "kb"  //
+  };
+
+  unsigned int pieceTextures;
   int width, height, nrChannels;
-  stbi_set_flip_vertically_on_load(
-      true); // tell stb_image.h to flip loaded texture's on the y-axis.
-  unsigned char *data = stbi_load("assets/textures/pieces/awesomeface.png",
-                                  &width, &height, &nrChannels, 0);
-  if (data) {
-    if (isTransparent)
+
+  for (unsigned int i = 0; i < 12; i++) {
+    // TODO generate all 16 textures outside of the loop
+    glGenTextures(1, &i + 1);
+    glBindTexture(GL_TEXTURE_2D, i);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char *data =
+        stbi_load(std::string(("assets/textures/pieces/") + pieceNames[i] +
+                              std::string(".png"))
+                      .c_str(),
+                  &width, &height, &nrChannels, 0);
+    if (data) {
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                    GL_UNSIGNED_BYTE, data);
-    else
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-                   GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    std::cout << "Failed to load texture" << std::endl;
+      glGenerateMipmap(GL_TEXTURE_2D);
+      // std::cout << "Generated texture(" << i << "): " << pieceNames[i]
+      //           << std::endl;
+    } else {
+      std::cout << "Failed to load texture " << pieceNames[i] << std::endl;
+    }
+    stbi_image_free(data);
   }
-  stbi_image_free(data);
 }
