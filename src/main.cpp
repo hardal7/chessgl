@@ -8,6 +8,7 @@
 
 #include "../includes/shader.h"
 #include "board.cpp"
+#include "fen.cpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -54,6 +55,9 @@ int main() {
   generateVertices(whiteSquareVertices, 'w');
   float blackSquareVertices[256];
   generateVertices(blackSquareVertices, 'b');
+  float pieceVertices[512];
+  int piecePositions[32];
+  fenToPosition(pieceVertices, piecePositions, (char*)"5r2/8/1R6/ppk3p1/2N3P1/P4b2/1K6/5B2");
   unsigned int indices[192];
   generateIndices(indices);
 
@@ -82,20 +86,6 @@ int main() {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
-  const float pieceVertices[] = {
-      // Each square is 0.25 long.
-      // positions  // texture coords
-      0.25f, 0.25f, 0.0f, 1.0f, 1.0f, // top right
-      0.25f, -0.f,  0.0f, 1.0f, 0.0f, // bottom right
-      -0.f,  -0.f,  0.0f, 0.0f, 0.0f, // bottom left
-      -0.f,  0.25f, 0.0f, 0.0f, 1.0f  // top left
-  };
-
-  const unsigned int pieceIndices[] = {
-      0, 1, 3, // first triangle
-      1, 2, 3  // second triangle
-  };
-
   enum Piece {
     WhitePawn,
     WhiteKnight,
@@ -120,14 +110,14 @@ int main() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(pieceVertices), pieceVertices,
                GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[2]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(pieceIndices), pieceIndices,
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
                GL_STATIC_DRAW);
   // position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
   // texture coord attribute
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                        (void *)(3 * sizeof(float)));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                        (void *)(2 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
   // render loop
@@ -177,9 +167,11 @@ int main() {
     glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_INT, 0);
 
     pieceShader.use();
-    glBindTexture(GL_TEXTURE_2D, WhitePawn);
     glBindVertexArray(VAO[2]);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    for (unsigned long i = 0; i < 32; i++) {
+      glBindTexture(GL_TEXTURE_2D, piecePositions[i]);
+      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(24*i));
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
