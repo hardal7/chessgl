@@ -7,7 +7,7 @@
 
 #include "../includes/shader.h"
 #include "board.cpp"
-#include "fen.cpp"
+#include "move.cpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -15,6 +15,9 @@ void generatePieceTextures();
 
 const int screenWidth = 640;
 const int screenHeight = 640;
+
+unsigned int pieceNames[32];
+unsigned long piecePositions[32];
 
 int main() {
   glfwInit();
@@ -52,11 +55,7 @@ int main() {
 
   float vertices[1024];
   unsigned int indices[384];
-  unsigned int pieceNames[64];
-  unsigned long piecePositions[64];
 
-  fenToPosition(piecePositions, pieceNames);
-  //              (char *)"5r2/8/1R6/ppk3p1/2N3P1/P4b2/1K6/5B2");
   generateVertices(vertices);
   generateIndices(indices);
 
@@ -67,8 +66,7 @@ int main() {
 
   glBindVertexArray(VAO[0]);
   glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
                GL_STATIC_DRAW);
@@ -81,6 +79,8 @@ int main() {
   generatePieceTextures();
   pieceShader.use();
   pieceShader.setInt("pieceTexture", 0);
+
+  fenToPosition(piecePositions, pieceNames);
 
   // render loop
   while (!glfwWindowShouldClose(window)) {
@@ -101,13 +101,8 @@ int main() {
     pieceShader.use();
     for (unsigned long i = 0; i < 32; i++) {
       glBindTexture(GL_TEXTURE_2D, pieceNames[i]);
-      if (i == 19) {
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,
-                       (void *)(24 * (piecePositions[i] - 16)));
-      } else {
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,
-                       (void *)(24 * piecePositions[i]));
-      }
+      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,
+                     (void *)(24 * piecePositions[i]));
     }
 
     glfwSwapBuffers(window);

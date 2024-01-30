@@ -1,7 +1,6 @@
-void fenToPosition(unsigned long piecePositions[64],
-                   unsigned int pieceNames[64],
-                   char fenString[90] =
-                       (char *)"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") {
+void fenToPosition(
+    unsigned long piecePositions[32], unsigned int pieceNames[32],
+    char *fenString = (char *)"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") {
   unsigned int l = 0;
   unsigned int piecePosition = 0;
 
