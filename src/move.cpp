@@ -1,75 +1,70 @@
-#include "fen.cpp"
 #include <cstring>
-#include <iostream>
+void movePiece(unsigned int piecePositions[64], char move[5]) {
 
-void movePiece(unsigned long piecePositions[32], unsigned int pieceNames[32],
-               char move[], bool isWhitesTurn = true) {
+  unsigned int oldPosition, newPosition;
 
-  int piecePosition = 0;
-  (strlen(move) == 2 ? move[0] : move[1]) == 'a'   ? piecePosition += 0
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'b' ? piecePosition += 1
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'c' ? piecePosition += 2
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'd' ? piecePosition += 3
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'e' ? piecePosition += 4
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'f' ? piecePosition += 5
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'g' ? piecePosition += 6
-  : (strlen(move) == 2 ? move[0] : move[1]) == 'h' ? piecePosition += 7
-                                                   : piecePosition += 64;
-  piecePosition +=
-      (7 - (((strlen(move) == 2 ? move[1] : move[2]) - '0') - 1)) * 8;
+  // Transofrm board position to a number
+  for (int i = 0; i < 2; i++) {
 
-  if (strlen(move) == 2) {
-    std::cout << "Pawn moved!" << std::endl;
-    for (unsigned int i = (isWhitesTurn ? 16 : 8); i < (isWhitesTurn ? 24 : 16);
-         i++) {
-      if (piecePositions[i] == (piecePosition + (isWhitesTurn ? +8 : -8))) {
-        piecePositions[i] = piecePosition;
-        return;
-      } else if (piecePositions[i] ==
-                 (piecePosition + (isWhitesTurn ? +16 : -16))) {
-        piecePositions[i] = piecePosition;
-        return;
-      }
-    }
+    (i == 0 ? move[0] : move[2]) == 'a'
+        ? (i == 0 ? oldPosition : newPosition) = 0
+    : (i == 0 ? move[0] : move[2]) == 'b'
+        ? (i == 0 ? oldPosition : newPosition) = 1
+    : (i == 0 ? move[0] : move[2]) == 'c'
+        ? (i == 0 ? oldPosition : newPosition) = 2
+    : (i == 0 ? move[0] : move[2]) == 'd'
+        ? (i == 0 ? oldPosition : newPosition) = 3
+    : (i == 0 ? move[0] : move[2]) == 'e'
+        ? (i == 0 ? oldPosition : newPosition) = 4
+    : (i == 0 ? move[0] : move[2]) == 'f'
+        ? (i == 0 ? oldPosition : newPosition) = 5
+    : (i == 0 ? move[0] : move[2]) == 'g'
+        ? (i == 0 ? oldPosition : newPosition) = 6
+    : (i == 0 ? move[0] : move[2]) == 'h'
+        ? (i == 0 ? oldPosition : newPosition) = 7
+        : oldPosition = 64;
+
+    (i == 0 ? oldPosition : newPosition) +=
+        ((7 - (((i == 0 ? move[1] : move[3]) - '0') - 1)) * 8);
+  };
+
+  // Castling
+  if (move == "e1g1" || move == "e1c1" || move == "e8g8" || move == "e8c8") {
+    piecePositions[newPosition] = piecePositions[oldPosition];
+    piecePositions[oldPosition] = 0;
+
+    piecePositions[newPosition + (move[2] == 'g' ? -1 : 1)] =
+        (move[1] == '1' ? 4 : 10);
+    piecePositions[newPosition + (move[2] == 'g' ? 1 : -2)] = 0;
   }
-  if (strlen((move)) == 3) {
-    if (move[0] == 'K') {
-      piecePositions[(isWhitesTurn ? 28 : 4)] = piecePosition;
-      return;
-    } else if (move[0] == 'Q') {
-      return;
-      piecePositions[(isWhitesTurn ? 27 : 3)] = piecePosition;
-    } else if (move[0] == 'R') {
-      for (unsigned int i = (isWhitesTurn ? 24 : 0);
-           i <= (isWhitesTurn ? 31 : 7); i += 7) {
-        for (int j = -7; j < 8; j++) {
-          if (piecePositions[i] == piecePosition + j ||
-              piecePositions[i] == piecePosition + (8 * j)) {
-            piecePositions[i] = piecePosition;
-            return;
-          }
-        }
-      }
-    } else if (move[0] == 'B') {
-      (((((piecePosition + 1) % 8) + ((piecePosition + 1) / 8)) % 2 == 0)
-           ? (isWhitesTurn ? piecePositions[26] : piecePositions[2])
-           : (isWhitesTurn ? piecePositions[29] : piecePositions[5])) =
-          piecePosition;
-      return;
-    } else if (move[0] == 'N') {
-      for (unsigned int i = (isWhitesTurn ? 25 : 1);
-           i <= (isWhitesTurn ? 30 : 6); i += 5) {
-        for (int j = 1; j >= -1; j -= 2) {
-          if (piecePositions[i] == (piecePosition + (17 * j)) ||
-              piecePositions[i] == (piecePosition + (15 * j)) ||
-              piecePositions[i] == (piecePosition + (10 * j)) ||
-              piecePositions[i] == (piecePosition + (8 * j))) {
-            std::cout << "Knight move!" << std::endl;
-            piecePositions[i] = piecePosition;
-            return;
-          }
-        }
-      }
-    }
+  // En passant
+  else if ((piecePositions[oldPosition] == 1 ||
+            piecePositions[oldPosition] == 7) &&
+           (piecePositions[oldPosition - 1] == 1 ||
+            piecePositions[oldPosition - 1] == 7 ||
+            piecePositions[oldPosition + 1] == 1 ||
+            piecePositions[oldPosition + 1] == 7) &&
+           ((oldPosition == newPosition + 7) ||
+            (oldPosition == newPosition - 7) ||
+            (oldPosition == newPosition + 9) ||
+            (oldPosition == newPosition - 7))) {
+    piecePositions[newPosition] = piecePositions[oldPosition];
+    piecePositions[oldPosition] = 0;
+    piecePositions[newPosition + (piecePositions[newPosition] == 1 ? 8 : -8)] =
+        0;
+  }
+  // Promotion
+  else if (strlen(move) == 5) {
+    piecePositions[newPosition] =
+        (move[4] == 'N'   ? (newPosition < oldPosition ? 2 : 8)
+         : move[4] == 'B' ? (newPosition < oldPosition ? 3 : 9)
+         : move[4] == 'R' ? (newPosition < oldPosition ? 4 : 10)
+                          : (newPosition < oldPosition ? 5 : 11));
+    piecePositions[oldPosition] = 0;
+  }
+  // Any other move
+  else {
+    piecePositions[newPosition] = piecePositions[oldPosition];
+    piecePositions[oldPosition] = 0;
   }
 }

@@ -7,6 +7,7 @@
 
 #include "../includes/shader.h"
 #include "board.cpp"
+#include "fen.cpp"
 #include "move.cpp"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -16,8 +17,7 @@ void generatePieceTextures();
 const int screenWidth = 640;
 const int screenHeight = 640;
 
-unsigned int pieceNames[32];
-unsigned long piecePositions[32];
+unsigned int piecePositions[64];
 
 int main() {
   glfwInit();
@@ -38,6 +38,7 @@ int main() {
   }
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSwapInterval(1);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
@@ -64,6 +65,8 @@ int main() {
   glGenBuffers(1, VBO);
   glGenBuffers(1, EBO);
 
+  // Same VAO will be used for the board and the pieces
+  // Because everything is a square, see: board.cpp
   glBindVertexArray(VAO[0]);
   glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -80,15 +83,16 @@ int main() {
   pieceShader.use();
   pieceShader.setInt("pieceTexture", 0);
 
-  fenToPosition(piecePositions, pieceNames);
+  fenToPosition(piecePositions);
 
-  // render loop
+  // Render Loop
   while (!glfwWindowShouldClose(window)) {
     glClearColor(0.40f, 0.10, 0.40f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBindVertexArray(VAO[0]);
 
+    // Alternate between white and black squares
     bool j = true;
     for (unsigned long i = 0; i < 64; i++) {
       j ? i % 2 == 0 ? whiteSquareShader.use() : blackSquareShader.use()
@@ -98,11 +102,13 @@ int main() {
       (i + 1) % 8 == 0 ? j = !j : j = j;
     }
 
+    // Render pieces using the piecePositions array
     pieceShader.use();
-    for (unsigned long i = 0; i < 32; i++) {
-      glBindTexture(GL_TEXTURE_2D, pieceNames[i]);
-      glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT,
-                     (void *)(24 * piecePositions[i]));
+    for (unsigned long i = 0; i < 64; i++) {
+      if (piecePositions[i] != 0) {
+        glBindTexture(GL_TEXTURE_2D, piecePositions[i] - 1);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)(24 * i));
+      }
     }
 
     glfwSwapBuffers(window);
@@ -123,6 +129,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
+// Generates piece textures
 void generatePieceTextures() {
   const std::string pieceNames[12] = {
       "pw", "nw", "bw", "rw", "qw", "kw", //
@@ -133,7 +140,6 @@ void generatePieceTextures() {
   int width, height, nrChannels;
 
   for (unsigned int i = 0; i < 12; i++) {
-    // TODO generate all 16 textures outside of the loop
     glGenTextures(1, &i + 1);
     glBindTexture(GL_TEXTURE_2D, i);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -150,8 +156,6 @@ void generatePieceTextures() {
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                    GL_UNSIGNED_BYTE, data);
       glGenerateMipmap(GL_TEXTURE_2D);
-      // std::cout << "Generated texture(" << i << "): " << pieceNames[i]
-      //           << std::endl;
     } else {
       std::cout << "Failed to load texture " << pieceNames[i] << std::endl;
     }

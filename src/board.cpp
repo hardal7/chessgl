@@ -1,3 +1,4 @@
+//Generates vertices for 64 squares
 void generateVertices(float vertices[1024]) {
   float xPosition = -1.0f;
   float yPosition = 1.25f;
@@ -10,7 +11,8 @@ void generateVertices(float vertices[1024]) {
       xPosition = -1.0f;
       yPosition -= 0.25f;
     }
-
+    
+    //Alternates between position and texture vertices
     vertices[i + 0 + j] = xPosition;
     vertices[i + 1 + j] = yPosition;
 
@@ -39,13 +41,7 @@ void generateVertices(float vertices[1024]) {
   }
 }
 
-// for (int i = 1; i <= 1024; i++) {
-//   if ((i + 7) % 8 == 0)
-//     std::cout << i << std::endl;
-//   i % 2 ? std::cout << "(" << vertices[i - 1] << ", "
-//         : std::cout << vertices[i - 1] << ")" << std::endl;
-// }
-
+//Generates indices for the squares
 void generateIndices(unsigned int indices[384]) {
   int j = 0;
   for (unsigned int i = 0; i < 384; i++) {
@@ -53,7 +49,3 @@ void generateIndices(unsigned int indices[384]) {
     (i - 2) % 6 != 0 ? j++ : j--;
   }
 }
-
-// for (int i = 1; i <= 384; i++)
-//   i % 3 != 0 ? std::cout << indices[i - 1] << ", "
-//              : std::cout << indices[i - 1] << std::endl;
