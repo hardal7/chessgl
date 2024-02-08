@@ -1,4 +1,4 @@
-//Generates vertices for 64 squares
+// Generates vertices for 64 squares
 void generateVertices(float vertices[1024]) {
   float xPosition = -1.0f;
   float yPosition = 1.25f;
@@ -11,8 +11,8 @@ void generateVertices(float vertices[1024]) {
       xPosition = -1.0f;
       yPosition -= 0.25f;
     }
-    
-    //Alternates between position and texture vertices
+
+    // After every vertex there is also a vertex for the texture coords
     vertices[i + 0 + j] = xPosition;
     vertices[i + 1 + j] = yPosition;
 
@@ -41,7 +41,15 @@ void generateVertices(float vertices[1024]) {
   }
 }
 
-//Generates indices for the squares
+// Generates indices for the squares
+// The pattern the indices follow is as follows:
+// First squre:
+// 0, 1, 2
+// 1, 2, 3 
+// Second square:
+// 4, 5, 6
+// 5, 6, 7
+// ...
 void generateIndices(unsigned int indices[384]) {
   int j = 0;
   for (unsigned int i = 0; i < 384; i++) {

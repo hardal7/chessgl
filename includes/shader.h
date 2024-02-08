@@ -23,8 +23,8 @@ public:
         fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
         try 
         {
-            vShaderFile.open(vertexPath);
-            fShaderFile.open(fragmentPath);
+            vShaderFile.open(std::string("assets/shaders/") + vertexPath);
+            fShaderFile.open(std::string("assets/shaders/") + fragmentPath);
             std::stringstream vShaderStream, fShaderStream;
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();		
