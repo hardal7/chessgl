@@ -1,7 +1,7 @@
 #include <cstring>
 // Updates the piecePositions array according to the move made 
 // See: fen.cpp
-void movePiece(unsigned int piecePositions[64], char move[5]) {
+void movePiece(unsigned int piecePositions[64], const char move[5]) {
 
   unsigned int oldPosition, newPosition;
 
@@ -26,7 +26,7 @@ void movePiece(unsigned int piecePositions[64], char move[5]) {
         ? (i == 0 ? oldPosition : newPosition) = 6
     : (i == 0 ? move[0] : move[2]) == 'h'
         ? (i == 0 ? oldPosition : newPosition) = 7
-        : oldPosition = 64;
+    : oldPosition = 64;
 
     // 1 to 8
     (i == 0 ? oldPosition : newPosition) += ((7 - (((i == 0 ? move[1] : move[3]) - '0') - 1)) * 8);

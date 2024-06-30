@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <iostream>
 
 #include "../includes/glad/glad.h"
@@ -18,8 +19,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void generatePieceTextures();
 
-const int screenWidth = 640;
-const int screenHeight = 640;
+const unsigned int screenWidth = 480;
+const unsigned int screenHeight = 480;
 
 // This is an array of piece positions, for example if you want to get the piece
 // at position 23 you could use piecePositions[22], the possible values in the
@@ -92,7 +93,15 @@ int main() {
   pieceShader.setInt("pieceTexture", 0);
 
   // Initialize the board using a FEN value
-  fenToPosition(piecePositions);
+  //fenToPosition(piecePositions, "r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1");
+  fenToPosition(piecePositions, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+
+  //Moves will be sent over to this function as strings
+  //An example of the scandavian defense
+  //movePiece(piecePositions, "e2e4");
+  //movePiece(piecePositions, "d7d5");
+  //movePiece(piecePositions, "e4d5");
+  //movePiece(piecePositions, "d8d5");
 
   // Render Loop
   while (!glfwWindowShouldClose(window)) {
@@ -121,10 +130,15 @@ int main() {
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *)(24 * i));
       }
     }
-
+    
     glfwSwapBuffers(window);
     glfwPollEvents();
     processInput(window);
+
+    std::string move;
+    std::cout << "Enter your move: ";
+    std::cin >> move;
+    movePiece(piecePositions, move.c_str());
   }
 
   glfwTerminate();
@@ -166,7 +180,7 @@ void generatePieceTextures() {
 
     if (data) {
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-      glGenerateMipmap(GL_TEXTURE_2D);
+      //glGenerateMipmap(GL_TEXTURE_2D);
     } 
     else {
       std::cout << "Failed to load texture " << pieceNames[i] << std::endl;
